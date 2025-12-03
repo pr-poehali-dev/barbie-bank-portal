@@ -4,29 +4,37 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const Index = () => {
   const [loanAmount, setLoanAmount] = useState([1000000]);
   const [loanTerm, setLoanTerm] = useState([12]);
-  const [interestRate] = useState(12.5);
+  const [mortgageAmount, setMortgageAmount] = useState([3000000]);
+  const [mortgageTerm, setMortgageTerm] = useState([240]);
+  const [autoAmount, setAutoAmount] = useState([800000]);
+  const [autoTerm, setAutoTerm] = useState([36]);
   const [activeSection, setActiveSection] = useState('home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const calculateMonthlyPayment = () => {
-    const principal = loanAmount[0];
-    const monthlyRate = interestRate / 100 / 12;
-    const numPayments = loanTerm[0];
-    
-    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
-                          (Math.pow(1 + monthlyRate, numPayments) - 1);
-    
+  const calculatePayment = (principal: number, rate: number, months: number) => {
+    const monthlyRate = rate / 100 / 12;
+    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) / 
+                          (Math.pow(1 + monthlyRate, months) - 1);
     return monthlyPayment.toFixed(2);
   };
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
+    setMobileMenuOpen(false);
     const element = document.getElementById(sectionId);
     element?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const menuItems = ['Главная', 'Услуги', 'Тарифы', 'Кредиты', 'Вклады', 'О банке'];
+  const sectionIds = ['home', 'services', 'tariffs', 'credits', 'deposits', 'about'];
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,14 +49,12 @@ const Index = () => {
             </div>
             
             <div className="hidden md:flex space-x-8">
-              {['Главная', 'Услуги', 'Тарифы', 'Кредиты', 'Вклады', 'О банке'].map((item, idx) => (
+              {menuItems.map((item, idx) => (
                 <button
                   key={idx}
-                  onClick={() => scrollToSection(['home', 'services', 'tariffs', 'credits', 'deposits', 'about'][idx])}
+                  onClick={() => scrollToSection(sectionIds[idx])}
                   className={`text-sm font-medium transition-colors hover:text-primary ${
-                    activeSection === ['home', 'services', 'tariffs', 'credits', 'deposits', 'about'][idx]
-                      ? 'text-primary'
-                      : 'text-foreground'
+                    activeSection === sectionIds[idx] ? 'text-primary' : 'text-secondary'
                   }`}
                 >
                   {item}
@@ -56,32 +62,97 @@ const Index = () => {
               ))}
             </div>
             
-            <Button className="hidden md:flex">
-              <Icon name="Phone" size={16} className="mr-2" />
-              8 800 000 00 00
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button className="hidden md:flex">
+                <Icon name="Phone" size={16} className="mr-2" />
+                8 800 000 00 00
+              </Button>
+              
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Icon name="Menu" size={24} />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px]">
+                  <div className="flex flex-col gap-6 mt-8">
+                    {menuItems.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => scrollToSection(sectionIds[idx])}
+                        className={`text-lg font-medium text-left transition-colors hover:text-primary ${
+                          activeSection === sectionIds[idx] ? 'text-primary' : 'text-secondary'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                    <Button className="w-full mt-4">
+                      <Icon name="Phone" size={16} className="mr-2" />
+                      8 800 000 00 00
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </nav>
 
       <main className="pt-16">
-        <section id="home" className="relative bg-gradient-to-br from-primary to-accent py-24 px-4">
+        <section id="home" className="relative bg-gradient-to-br from-primary to-accent py-24 px-4 overflow-hidden">
           <div className="container mx-auto">
-            <div className="max-w-3xl">
-              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-                Ваш надёжный финансовый партнер
-              </h1>
-              <p className="text-xl text-white/90 mb-8">
-                Современные банковские решения для вашего бизнеса и личных целей. 
-                Выгодные кредиты, высокие проценты по вкладам, удобные сервисы.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" variant="secondary" className="text-lg">
-                  Открыть счет
-                </Button>
-                <Button size="lg" variant="outline" className="text-lg bg-white hover:bg-white/90">
-                  Узнать больше
-                </Button>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="animate-fade-in">
+                <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+                  Ваш надёжный финансовый партнер
+                </h1>
+                <p className="text-xl text-white/90 mb-8">
+                  Современные банковские решения для вашего бизнеса и личных целей. 
+                  Выгодные кредиты, высокие проценты по вкладам, удобные сервисы.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="lg" variant="secondary" className="text-lg">
+                        Открыть счет
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Открыть счёт в Барби Банк</DialogTitle>
+                        <DialogDescription>
+                          Заполните форму и мы свяжемся с вами в ближайшее время
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">ФИО</Label>
+                          <Input id="name" placeholder="Иванова Анна Сергеевна" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Телефон</Label>
+                          <Input id="phone" placeholder="+7 (900) 123-45-67" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input id="email" type="email" placeholder="anna@example.com" />
+                        </div>
+                        <Button className="w-full">Отправить заявку</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button size="lg" variant="outline" className="text-lg bg-white hover:bg-white/90">
+                    Узнать больше
+                  </Button>
+                </div>
+              </div>
+              <div className="hidden md:block animate-fade-in">
+                <img 
+                  src="https://cdn.poehali.dev/projects/9b6a49ab-1107-47d3-8e2d-87364a312074/files/bb906c4f-0c8e-44c4-8836-1d83d82ffd05.jpg" 
+                  alt="Банковская карта" 
+                  className="rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-300"
+                />
               </div>
             </div>
           </div>
@@ -89,7 +160,7 @@ const Index = () => {
 
         <section id="services" className="py-20 px-4 bg-muted/30">
           <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-4">Наши услуги</h2>
+            <h2 className="text-4xl font-bold text-center mb-4 text-secondary">Наши услуги</h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
               Полный спектр банковских продуктов для физических и юридических лиц
             </p>
@@ -101,12 +172,12 @@ const Index = () => {
                 { icon: 'TrendingUp', title: 'Инвестиции', desc: 'Брокерское обслуживание и доверительное управление' },
                 { icon: 'Shield', title: 'Страхование', desc: 'Защита имущества, здоровья и финансов' }
               ].map((service, idx) => (
-                <Card key={idx} className="hover:shadow-lg transition-shadow">
+                <Card key={idx} className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fade-in">
                   <CardHeader>
                     <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                       <Icon name={service.icon as any} className="text-primary" size={24} />
                     </div>
-                    <CardTitle className="text-xl">{service.title}</CardTitle>
+                    <CardTitle className="text-xl text-secondary">{service.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CardDescription className="text-base">{service.desc}</CardDescription>
@@ -119,7 +190,7 @@ const Index = () => {
 
         <section id="tariffs" className="py-20 px-4">
           <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-4">Тарифы</h2>
+            <h2 className="text-4xl font-bold text-center mb-4 text-secondary">Тарифы</h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
               Прозрачные условия обслуживания для всех категорий клиентов
             </p>
@@ -130,11 +201,11 @@ const Index = () => {
                 { name: 'Премиум', price: '990', features: ['Личный менеджер', 'Кэшбэк до 10%', 'До 7% на остаток', 'Безлимитные переводы', 'Приоритетная поддержка'], highlight: true },
                 { name: 'Бизнес', price: '1990', features: ['Расчетный счет', 'Эквайринг от 1.5%', 'Бухгалтерия онлайн', 'API интеграция'] }
               ].map((tariff, idx) => (
-                <Card key={idx} className={tariff.highlight ? 'border-primary shadow-xl scale-105' : ''}>
+                <Card key={idx} className={`hover:shadow-xl transition-all duration-300 ${tariff.highlight ? 'border-primary shadow-xl scale-105' : ''}`}>
                   <CardHeader>
-                    <CardTitle className="text-2xl">{tariff.name}</CardTitle>
+                    <CardTitle className="text-2xl text-secondary">{tariff.name}</CardTitle>
                     <div className="mt-4">
-                      <span className="text-4xl font-bold">{tariff.price}</span>
+                      <span className="text-4xl font-bold text-primary">{tariff.price}</span>
                       <span className="text-muted-foreground"> ₽/мес</span>
                     </div>
                   </CardHeader>
@@ -147,9 +218,32 @@ const Index = () => {
                         </li>
                       ))}
                     </ul>
-                    <Button className="w-full mt-6" variant={tariff.highlight ? 'default' : 'outline'}>
-                      Подключить
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="w-full mt-6" variant={tariff.highlight ? 'default' : 'outline'}>
+                          Подключить
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Подключить тариф {tariff.name}</DialogTitle>
+                          <DialogDescription>
+                            Заполните контактные данные для подключения тарифа
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name-tariff">ФИО</Label>
+                            <Input id="name-tariff" placeholder="Иванова Анна Сергеевна" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="phone-tariff">Телефон</Label>
+                            <Input id="phone-tariff" placeholder="+7 (900) 123-45-67" />
+                          </div>
+                          <Button className="w-full">Подключить тариф</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </CardContent>
                 </Card>
               ))}
@@ -159,7 +253,7 @@ const Index = () => {
 
         <section id="credits" className="py-20 px-4 bg-muted/30">
           <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-4">Кредиты и калькулятор</h2>
+            <h2 className="text-4xl font-bold text-center mb-4 text-secondary">Кредиты и калькулятор</h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
               Рассчитайте ежемесячный платёж по кредиту онлайн
             </p>
@@ -167,7 +261,7 @@ const Index = () => {
             <div className="max-w-4xl mx-auto">
               <Card>
                 <CardHeader>
-                  <CardTitle>Кредитный калькулятор</CardTitle>
+                  <CardTitle className="text-secondary">Кредитный калькулятор</CardTitle>
                   <CardDescription>Узнайте условия кредита за минуту</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -182,7 +276,7 @@ const Index = () => {
                       <div>
                         <div className="flex justify-between mb-2">
                           <label className="text-sm font-medium">Сумма кредита</label>
-                          <span className="text-sm font-bold">{loanAmount[0].toLocaleString('ru-RU')} ₽</span>
+                          <span className="text-sm font-bold text-primary">{loanAmount[0].toLocaleString('ru-RU')} ₽</span>
                         </div>
                         <Slider
                           value={loanAmount}
@@ -197,7 +291,7 @@ const Index = () => {
                       <div>
                         <div className="flex justify-between mb-2">
                           <label className="text-sm font-medium">Срок кредита</label>
-                          <span className="text-sm font-bold">{loanTerm[0]} мес</span>
+                          <span className="text-sm font-bold text-primary">{loanTerm[0]} мес</span>
                         </div>
                         <Slider
                           value={loanTerm}
@@ -213,31 +307,206 @@ const Index = () => {
                         <div className="grid md:grid-cols-3 gap-4 text-center">
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Ежемесячный платёж</p>
-                            <p className="text-2xl font-bold text-primary">{Number(calculateMonthlyPayment()).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(loanAmount[0], 12.5, loanTerm[0])).toLocaleString('ru-RU')} ₽</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Процентная ставка</p>
-                            <p className="text-2xl font-bold">{interestRate}%</p>
+                            <p className="text-2xl font-bold text-primary">12.5%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Переплата</p>
-                            <p className="text-2xl font-bold">{(Number(calculateMonthlyPayment()) * loanTerm[0] - loanAmount[0]).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(loanAmount[0], 12.5, loanTerm[0])) * loanTerm[0] - loanAmount[0]).toLocaleString('ru-RU')} ₽</p>
                           </div>
                         </div>
-                        <Button className="w-full mt-6" size="lg">
-                          Оформить заявку
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="w-full mt-6" size="lg">
+                              Оформить заявку
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Заявка на потребительский кредит</DialogTitle>
+                              <DialogDescription>
+                                Сумма: {loanAmount[0].toLocaleString('ru-RU')} ₽, срок: {loanTerm[0]} мес
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="name-loan">ФИО</Label>
+                                <Input id="name-loan" placeholder="Иванова Анна Сергеевна" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="phone-loan">Телефон</Label>
+                                <Input id="phone-loan" placeholder="+7 (900) 123-45-67" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="income">Ежемесячный доход</Label>
+                                <Input id="income" placeholder="50 000" />
+                              </div>
+                              <Button className="w-full">Отправить заявку</Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </TabsContent>
                     
-                    <TabsContent value="mortgage" className="text-center py-8">
-                      <Icon name="Home" size={48} className="text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Ипотечный калькулятор с ставкой от 7.5%</p>
+                    <TabsContent value="mortgage" className="space-y-6">
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-medium">Стоимость недвижимости</label>
+                          <span className="text-sm font-bold text-primary">{mortgageAmount[0].toLocaleString('ru-RU')} ₽</span>
+                        </div>
+                        <Slider
+                          value={mortgageAmount}
+                          onValueChange={setMortgageAmount}
+                          min={1000000}
+                          max={15000000}
+                          step={100000}
+                          className="mb-4"
+                        />
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-medium">Срок кредита</label>
+                          <span className="text-sm font-bold text-primary">{Math.round(mortgageTerm[0] / 12)} лет ({mortgageTerm[0]} мес)</span>
+                        </div>
+                        <Slider
+                          value={mortgageTerm}
+                          onValueChange={setMortgageTerm}
+                          min={60}
+                          max={360}
+                          step={12}
+                          className="mb-4"
+                        />
+                      </div>
+                      
+                      <div className="bg-primary/10 rounded-lg p-6 mt-8">
+                        <div className="grid md:grid-cols-3 gap-4 text-center">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Ежемесячный платёж</p>
+                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(mortgageAmount[0], 7.5, mortgageTerm[0])).toLocaleString('ru-RU')} ₽</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Процентная ставка</p>
+                            <p className="text-2xl font-bold text-primary">7.5%</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Переплата</p>
+                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(mortgageAmount[0], 7.5, mortgageTerm[0])) * mortgageTerm[0] - mortgageAmount[0]).toLocaleString('ru-RU')} ₽</p>
+                          </div>
+                        </div>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="w-full mt-6" size="lg">
+                              Оформить заявку
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Заявка на ипотеку</DialogTitle>
+                              <DialogDescription>
+                                Сумма: {mortgageAmount[0].toLocaleString('ru-RU')} ₽, срок: {Math.round(mortgageTerm[0] / 12)} лет
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="name-mortgage">ФИО</Label>
+                                <Input id="name-mortgage" placeholder="Иванова Анна Сергеевна" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="phone-mortgage">Телефон</Label>
+                                <Input id="phone-mortgage" placeholder="+7 (900) 123-45-67" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="income-mortgage">Ежемесячный доход</Label>
+                                <Input id="income-mortgage" placeholder="100 000" />
+                              </div>
+                              <Button className="w-full">Отправить заявку</Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </TabsContent>
                     
-                    <TabsContent value="auto" className="text-center py-8">
-                      <Icon name="Car" size={48} className="text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Автокредит с ставкой от 9.9%</p>
+                    <TabsContent value="auto" className="space-y-6">
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-medium">Стоимость автомобиля</label>
+                          <span className="text-sm font-bold text-primary">{autoAmount[0].toLocaleString('ru-RU')} ₽</span>
+                        </div>
+                        <Slider
+                          value={autoAmount}
+                          onValueChange={setAutoAmount}
+                          min={300000}
+                          max={5000000}
+                          step={50000}
+                          className="mb-4"
+                        />
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-medium">Срок кредита</label>
+                          <span className="text-sm font-bold text-primary">{autoTerm[0]} мес</span>
+                        </div>
+                        <Slider
+                          value={autoTerm}
+                          onValueChange={setAutoTerm}
+                          min={12}
+                          max={84}
+                          step={6}
+                          className="mb-4"
+                        />
+                      </div>
+                      
+                      <div className="bg-primary/10 rounded-lg p-6 mt-8">
+                        <div className="grid md:grid-cols-3 gap-4 text-center">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Ежемесячный платёж</p>
+                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(autoAmount[0], 9.9, autoTerm[0])).toLocaleString('ru-RU')} ₽</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Процентная ставка</p>
+                            <p className="text-2xl font-bold text-primary">9.9%</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Переплата</p>
+                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(autoAmount[0], 9.9, autoTerm[0])) * autoTerm[0] - autoAmount[0]).toLocaleString('ru-RU')} ₽</p>
+                          </div>
+                        </div>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="w-full mt-6" size="lg">
+                              Оформить заявку
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Заявка на автокредит</DialogTitle>
+                              <DialogDescription>
+                                Сумма: {autoAmount[0].toLocaleString('ru-RU')} ₽, срок: {autoTerm[0]} мес
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="name-auto">ФИО</Label>
+                                <Input id="name-auto" placeholder="Иванова Анна Сергеевна" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="phone-auto">Телефон</Label>
+                                <Input id="phone-auto" placeholder="+7 (900) 123-45-67" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="car-model">Марка и модель авто</Label>
+                                <Input id="car-model" placeholder="Toyota Camry" />
+                              </div>
+                              <Button className="w-full">Отправить заявку</Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </CardContent>
@@ -248,7 +517,7 @@ const Index = () => {
 
         <section id="deposits" className="py-20 px-4">
           <div className="container mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-4">Вклады</h2>
+            <h2 className="text-4xl font-bold text-center mb-4 text-secondary">Вклады</h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
               Сохраните и приумножьте ваши средства с выгодными процентными ставками
             </p>
@@ -260,9 +529,9 @@ const Index = () => {
                 { name: 'Доходный', rate: '10.5', term: '12 мес', min: '100 000' },
                 { name: 'Максимальный', rate: '11.8', term: '24 мес', min: '500 000' }
               ].map((deposit, idx) => (
-                <Card key={idx} className="hover:shadow-lg transition-shadow">
+                <Card key={idx} className="hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <CardHeader>
-                    <CardTitle className="text-xl">{deposit.name}</CardTitle>
+                    <CardTitle className="text-xl text-secondary">{deposit.name}</CardTitle>
                     <div className="mt-4">
                       <span className="text-4xl font-bold text-primary">{deposit.rate}%</span>
                       <p className="text-sm text-muted-foreground mt-2">годовых</p>
@@ -279,9 +548,36 @@ const Index = () => {
                         <span className="font-medium">{deposit.min} ₽</span>
                       </div>
                     </div>
-                    <Button variant="outline" className="w-full">
-                      Открыть вклад
-                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                          Открыть вклад
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Открыть вклад {deposit.name}</DialogTitle>
+                          <DialogDescription>
+                            Ставка: {deposit.rate}% годовых, срок: {deposit.term}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name-deposit">ФИО</Label>
+                            <Input id="name-deposit" placeholder="Иванова Анна Сергеевна" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="phone-deposit">Телефон</Label>
+                            <Input id="phone-deposit" placeholder="+7 (900) 123-45-67" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="amount-deposit">Сумма вклада</Label>
+                            <Input id="amount-deposit" placeholder={deposit.min} />
+                          </div>
+                          <Button className="w-full">Открыть вклад</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </CardContent>
                 </Card>
               ))}
@@ -292,7 +588,7 @@ const Index = () => {
         <section id="about" className="py-20 px-4 bg-muted/30">
           <div className="container mx-auto">
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-12">О банке</h2>
+              <h2 className="text-4xl font-bold text-center mb-12 text-secondary">О банке</h2>
               
               <div className="grid md:grid-cols-3 gap-8 mb-12">
                 {[
@@ -307,34 +603,48 @@ const Index = () => {
                 ))}
               </div>
               
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-lg leading-relaxed mb-4">
-                    <strong>Барби Банк</strong> — это современный российский банк, предоставляющий полный спектр 
-                    финансовых услуг для частных и корпоративных клиентов. Мы работаем с 2009 года 
-                    и за это время завоевали доверие миллионов клиентов.
-                  </p>
-                  <p className="text-lg leading-relaxed mb-4">
-                    Наша миссия — делать финансовые услуги доступными, понятными и выгодными для каждого. 
-                    Мы используем передовые технологии, чтобы вы могли управлять своими финансами 
-                    в любое время и в любом месте.
-                  </p>
-                  <div className="flex flex-wrap gap-3 mt-6">
-                    <div className="flex items-center bg-primary/10 px-4 py-2 rounded-lg">
-                      <Icon name="Shield" className="text-primary mr-2" size={20} />
-                      <span className="text-sm font-medium">Лицензия ЦБ РФ</span>
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-lg leading-relaxed mb-4">
+                      <strong className="text-primary">Барби Банк</strong> — это современный российский банк, предоставляющий полный спектр 
+                      финансовых услуг для частных и корпоративных клиентов. Мы работаем с 2009 года 
+                      и за это время завоевали доверие миллионов клиентов.
+                    </p>
+                    <p className="text-lg leading-relaxed mb-4">
+                      Наша миссия — делать финансовые услуги доступными, понятными и выгодными для каждого. 
+                      Мы используем передовые технологии, чтобы вы могли управлять своими финансами 
+                      в любое время и в любом месте.
+                    </p>
+                    <div className="flex flex-wrap gap-3 mt-6">
+                      <div className="flex items-center bg-primary/10 px-4 py-2 rounded-lg">
+                        <Icon name="Shield" className="text-primary mr-2" size={20} />
+                        <span className="text-sm font-medium">Лицензия ЦБ РФ</span>
+                      </div>
+                      <div className="flex items-center bg-primary/10 px-4 py-2 rounded-lg">
+                        <Icon name="Award" className="text-primary mr-2" size={20} />
+                        <span className="text-sm font-medium">Страхование вкладов</span>
+                      </div>
+                      <div className="flex items-center bg-primary/10 px-4 py-2 rounded-lg">
+                        <Icon name="Lock" className="text-primary mr-2" size={20} />
+                        <span className="text-sm font-medium">Защита данных</span>
+                      </div>
                     </div>
-                    <div className="flex items-center bg-primary/10 px-4 py-2 rounded-lg">
-                      <Icon name="Award" className="text-primary mr-2" size={20} />
-                      <span className="text-sm font-medium">Страхование вкладов</span>
-                    </div>
-                    <div className="flex items-center bg-primary/10 px-4 py-2 rounded-lg">
-                      <Icon name="Lock" className="text-primary mr-2" size={20} />
-                      <span className="text-sm font-medium">Защита данных</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+                <div className="space-y-4">
+                  <img 
+                    src="https://cdn.poehali.dev/projects/9b6a49ab-1107-47d3-8e2d-87364a312074/files/a433eef4-03b2-45e2-824d-4ae85e055db8.jpg" 
+                    alt="Офис банка" 
+                    className="rounded-lg shadow-lg w-full h-48 object-cover"
+                  />
+                  <img 
+                    src="https://cdn.poehali.dev/projects/9b6a49ab-1107-47d3-8e2d-87364a312074/files/e0b2bfed-95f9-44b2-bf16-6d2f891da0d9.jpg" 
+                    alt="Довольные клиенты" 
+                    className="rounded-lg shadow-lg w-full h-48 object-cover"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </section>
