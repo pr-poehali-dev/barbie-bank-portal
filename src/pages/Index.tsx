@@ -12,18 +12,45 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 const Index = () => {
   const [loanAmount, setLoanAmount] = useState([1000000]);
   const [loanTerm, setLoanTerm] = useState([12]);
+  const [loanRate, setLoanRate] = useState([12.5]);
   const [mortgageAmount, setMortgageAmount] = useState([3000000]);
   const [mortgageTerm, setMortgageTerm] = useState([240]);
+  const [mortgageRate, setMortgageRate] = useState([7.5]);
   const [autoAmount, setAutoAmount] = useState([800000]);
   const [autoTerm, setAutoTerm] = useState([36]);
+  const [autoRate, setAutoRate] = useState([9.9]);
   const [activeSection, setActiveSection] = useState('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showSchedule, setShowSchedule] = useState<string | null>(null);
 
   const calculatePayment = (principal: number, rate: number, months: number) => {
     const monthlyRate = rate / 100 / 12;
     const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) / 
                           (Math.pow(1 + monthlyRate, months) - 1);
     return monthlyPayment.toFixed(2);
+  };
+
+  const generatePaymentSchedule = (principal: number, rate: number, months: number) => {
+    const monthlyRate = rate / 100 / 12;
+    const monthlyPayment = parseFloat(calculatePayment(principal, rate, months));
+    let remainingBalance = principal;
+    const schedule = [];
+
+    for (let month = 1; month <= months; month++) {
+      const interestPayment = remainingBalance * monthlyRate;
+      const principalPayment = monthlyPayment - interestPayment;
+      remainingBalance -= principalPayment;
+
+      schedule.push({
+        month,
+        payment: monthlyPayment,
+        principal: principalPayment,
+        interest: interestPayment,
+        balance: Math.max(0, remainingBalance)
+      });
+    }
+
+    return schedule;
   };
 
   const scrollToSection = (sectionId: string) => {
@@ -303,21 +330,71 @@ const Index = () => {
                         />
                       </div>
                       
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-medium">Процентная ставка</label>
+                          <span className="text-sm font-bold text-primary">{loanRate[0]}%</span>
+                        </div>
+                        <Slider
+                          value={loanRate}
+                          onValueChange={setLoanRate}
+                          min={5}
+                          max={30}
+                          step={0.5}
+                          className="mb-4"
+                        />
+                      </div>
+                      
                       <div className="bg-primary/10 rounded-lg p-6 mt-8">
                         <div className="grid md:grid-cols-3 gap-4 text-center">
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Ежемесячный платёж</p>
-                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(loanAmount[0], 12.5, loanTerm[0])).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(loanAmount[0], loanRate[0], loanTerm[0])).toLocaleString('ru-RU')} ₽</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Процентная ставка</p>
-                            <p className="text-2xl font-bold text-primary">12.5%</p>
+                            <p className="text-2xl font-bold text-primary">{loanRate[0]}%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Переплата</p>
-                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(loanAmount[0], 12.5, loanTerm[0])) * loanTerm[0] - loanAmount[0]).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(loanAmount[0], loanRate[0], loanTerm[0])) * loanTerm[0] - loanAmount[0]).toLocaleString('ru-RU')} ₽</p>
                           </div>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-4"
+                          onClick={() => setShowSchedule(showSchedule === 'consumer' ? null : 'consumer')}
+                        >
+                          <Icon name={showSchedule === 'consumer' ? 'ChevronUp' : 'ChevronDown'} size={16} className="mr-2" />
+                          {showSchedule === 'consumer' ? 'Скрыть' : 'Показать'} график платежей
+                        </Button>
+                        
+                        {showSchedule === 'consumer' && (
+                          <div className="mt-4 max-h-96 overflow-y-auto border rounded-lg">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted sticky top-0">
+                                <tr>
+                                  <th className="p-2 text-left">Месяц</th>
+                                  <th className="p-2 text-right">Платёж</th>
+                                  <th className="p-2 text-right">Основной долг</th>
+                                  <th className="p-2 text-right">Проценты</th>
+                                  <th className="p-2 text-right">Остаток</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {generatePaymentSchedule(loanAmount[0], loanRate[0], loanTerm[0]).map((row) => (
+                                  <tr key={row.month} className="border-t">
+                                    <td className="p-2">{row.month}</td>
+                                    <td className="p-2 text-right">{row.payment.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.principal.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.interest.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.balance.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button className="w-full mt-6" size="lg">
@@ -382,21 +459,71 @@ const Index = () => {
                         />
                       </div>
                       
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-medium">Процентная ставка</label>
+                          <span className="text-sm font-bold text-primary">{mortgageRate[0]}%</span>
+                        </div>
+                        <Slider
+                          value={mortgageRate}
+                          onValueChange={setMortgageRate}
+                          min={3}
+                          max={20}
+                          step={0.1}
+                          className="mb-4"
+                        />
+                      </div>
+                      
                       <div className="bg-primary/10 rounded-lg p-6 mt-8">
                         <div className="grid md:grid-cols-3 gap-4 text-center">
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Ежемесячный платёж</p>
-                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(mortgageAmount[0], 7.5, mortgageTerm[0])).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(mortgageAmount[0], mortgageRate[0], mortgageTerm[0])).toLocaleString('ru-RU')} ₽</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Процентная ставка</p>
-                            <p className="text-2xl font-bold text-primary">7.5%</p>
+                            <p className="text-2xl font-bold text-primary">{mortgageRate[0]}%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Переплата</p>
-                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(mortgageAmount[0], 7.5, mortgageTerm[0])) * mortgageTerm[0] - mortgageAmount[0]).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(mortgageAmount[0], mortgageRate[0], mortgageTerm[0])) * mortgageTerm[0] - mortgageAmount[0]).toLocaleString('ru-RU')} ₽</p>
                           </div>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-4"
+                          onClick={() => setShowSchedule(showSchedule === 'mortgage' ? null : 'mortgage')}
+                        >
+                          <Icon name={showSchedule === 'mortgage' ? 'ChevronUp' : 'ChevronDown'} size={16} className="mr-2" />
+                          {showSchedule === 'mortgage' ? 'Скрыть' : 'Показать'} график платежей
+                        </Button>
+                        
+                        {showSchedule === 'mortgage' && (
+                          <div className="mt-4 max-h-96 overflow-y-auto border rounded-lg">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted sticky top-0">
+                                <tr>
+                                  <th className="p-2 text-left">Месяц</th>
+                                  <th className="p-2 text-right">Платёж</th>
+                                  <th className="p-2 text-right">Основной долг</th>
+                                  <th className="p-2 text-right">Проценты</th>
+                                  <th className="p-2 text-right">Остаток</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {generatePaymentSchedule(mortgageAmount[0], mortgageRate[0], mortgageTerm[0]).map((row) => (
+                                  <tr key={row.month} className="border-t">
+                                    <td className="p-2">{row.month}</td>
+                                    <td className="p-2 text-right">{row.payment.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.principal.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.interest.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.balance.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button className="w-full mt-6" size="lg">
@@ -461,21 +588,71 @@ const Index = () => {
                         />
                       </div>
                       
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <label className="text-sm font-medium">Процентная ставка</label>
+                          <span className="text-sm font-bold text-primary">{autoRate[0]}%</span>
+                        </div>
+                        <Slider
+                          value={autoRate}
+                          onValueChange={setAutoRate}
+                          min={4}
+                          max={25}
+                          step={0.5}
+                          className="mb-4"
+                        />
+                      </div>
+                      
                       <div className="bg-primary/10 rounded-lg p-6 mt-8">
                         <div className="grid md:grid-cols-3 gap-4 text-center">
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Ежемесячный платёж</p>
-                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(autoAmount[0], 9.9, autoTerm[0])).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{Number(calculatePayment(autoAmount[0], autoRate[0], autoTerm[0])).toLocaleString('ru-RU')} ₽</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Процентная ставка</p>
-                            <p className="text-2xl font-bold text-primary">9.9%</p>
+                            <p className="text-2xl font-bold text-primary">{autoRate[0]}%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground mb-1">Переплата</p>
-                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(autoAmount[0], 9.9, autoTerm[0])) * autoTerm[0] - autoAmount[0]).toLocaleString('ru-RU')} ₽</p>
+                            <p className="text-2xl font-bold text-primary">{(Number(calculatePayment(autoAmount[0], autoRate[0], autoTerm[0])) * autoTerm[0] - autoAmount[0]).toLocaleString('ru-RU')} ₽</p>
                           </div>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-4"
+                          onClick={() => setShowSchedule(showSchedule === 'auto' ? null : 'auto')}
+                        >
+                          <Icon name={showSchedule === 'auto' ? 'ChevronUp' : 'ChevronDown'} size={16} className="mr-2" />
+                          {showSchedule === 'auto' ? 'Скрыть' : 'Показать'} график платежей
+                        </Button>
+                        
+                        {showSchedule === 'auto' && (
+                          <div className="mt-4 max-h-96 overflow-y-auto border rounded-lg">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted sticky top-0">
+                                <tr>
+                                  <th className="p-2 text-left">Месяц</th>
+                                  <th className="p-2 text-right">Платёж</th>
+                                  <th className="p-2 text-right">Основной долг</th>
+                                  <th className="p-2 text-right">Проценты</th>
+                                  <th className="p-2 text-right">Остаток</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {generatePaymentSchedule(autoAmount[0], autoRate[0], autoTerm[0]).map((row) => (
+                                  <tr key={row.month} className="border-t">
+                                    <td className="p-2">{row.month}</td>
+                                    <td className="p-2 text-right">{row.payment.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.principal.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.interest.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                    <td className="p-2 text-right">{row.balance.toLocaleString('ru-RU', {maximumFractionDigits: 0})} ₽</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button className="w-full mt-6" size="lg">
